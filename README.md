@@ -1,1 +1,8 @@
 # BRIQUE_codingtest
+
+### 초기세팅
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
