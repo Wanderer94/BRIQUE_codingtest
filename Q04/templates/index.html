@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monthly Temperature and Humidity</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <h1>Monthly Temperature and Humidity Graph</h1>
+
+    <!-- 폼 데이터 입력 부분 -->
+    <form id="data-form">
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Temperature (°C)</th>
+            <th>Humidity (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in range(data['months']|length) %}
+          <tr>
+            <td>{{ data['months'][i] }}</td>
+            <td>
+              <input
+                type="number"
+                step="0.1"
+                name="temperature"
+                value="{{ data['temperature'][i] }}"
+              />
+            </td>
+            <td>
+              <input
+                type="number"
+                step="0.1"
+                name="humidity"
+                value="{{ data['humidity'][i] }}"
+              />
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </form>
+
+    <!-- 랜덤화 버튼 -->
+    <form id="randomize-form">
+      <button type="button" onclick="randomize()">Randomize</button>
+    </form>
+
+    <!-- Plotly 그래프 -->
+    <div id="chart-container">{{ graph_html|safe }}</div>
+
+    <!-- JavaScript 코드 -->
+    <script>
+      function updateGraph() {
+        $.ajax({
+          url: "/update_data",
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            temperature: $('input[name="temperature"]')
+              .map(function () {
+                return $(this).val();
+              })
+              .get(),
+            humidity: $('input[name="humidity"]')
+              .map(function () {
+                return $(this).val();
+              })
+              .get(),
+          }),
+          success: function (response) {
+            $("#chart-container").html(response.graph_html);
+          },
+        });
+      }
+
+      function randomize() {
+        $.ajax({
+          url: "/randomize",
+          method: "POST",
+          success: function (response) {
+            $("#chart-container").html(response.graph_html);
+            // Update form fields with random values
+            $('input[name="temperature"]').each(function (index) {
+              $(this).val(response.temperature[index]);
+            });
+            $('input[name="humidity"]').each(function (index) {
+              $(this).val(response.humidity[index]);
+            });
+          },
+        });
+      }
+
+      $(document).on(
+        "input",
+        'input[name="temperature"], input[name="humidity"]',
+        updateGraph
+      );
+    </script>
+  </body>
+</html>
